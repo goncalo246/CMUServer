@@ -84,15 +84,16 @@ public class DealWithClient extends Thread {
                         username = mensagemDoCliente.getNome();
                         password = mensagemDoCliente.getPassword();
 
-                        System.out.println("#####################################################################");
-                        System.out.println("Recebi esta mensagem com tipo --> " + mensagemDoCliente.getTipo());
-                        System.out.println("Recebi esta mensagem com nome --> " + mensagemDoCliente.getNome());
-                        System.out.println("Recebi esta mensagem com email --> " + mensagemDoCliente.getEmail());
-                        System.out.println("Recebi esta mensagem com password --> " + mensagemDoCliente.getPassword());
+//                        System.out.println("#####################################################################");
+//                        System.out.println("Recebi esta mensagem com tipo --> " + mensagemDoCliente.getTipo());
+//                        System.out.println("Recebi esta mensagem com nome --> " + mensagemDoCliente.getNome());
+//                        System.out.println("Recebi esta mensagem com email --> " + mensagemDoCliente.getEmail());
+//                        System.out.println("Recebi esta mensagem com password --> " + mensagemDoCliente.getPassword());
 
                         insertStatement = new Insert();
                         int success = insertStatement.insertUser(email, username, password);
 
+                        insertStatement.closeConnection();
                         if (success == 0) {
                             sendMessage("criarconta_insucesso");
                         } else {
@@ -107,16 +108,24 @@ public class DealWithClient extends Thread {
                         email = mensagemDoCliente.getEmail();
                         password = mensagemDoCliente.getPassword();
 
-                        System.out.println("#####################################################################");
-                        System.out.println("Recebi esta mensagem com tipo --> " + mensagemDoCliente.getTipo());
-                        System.out.println("Recebi esta mensagem com email --> " + mensagemDoCliente.getEmail());
-                        System.out.println("Recebi esta mensagem com password --> " + mensagemDoCliente.getPassword());
+//                        System.out.println("#####################################################################");
+//                        System.out.println("Recebi esta mensagem com tipo --> " + mensagemDoCliente.getTipo());
+//                        System.out.println("Recebi esta mensagem com email --> " + mensagemDoCliente.getEmail());
+//                        System.out.println("Recebi esta mensagem com password --> " + mensagemDoCliente.getPassword());
 
                         selectStatement = new Select();
                         boolean confirmed = selectStatement.confirmLogin(email, password);
 
-                        String message = "login_" + String.valueOf(confirmed);
+                        selectStatement.closeConnection();
 
+                        String message = "login_" + String.valueOf(confirmed);
+                        if (confirmed) {
+                            selectStatement = new Select();
+                            message += ":" + selectStatement.getUsernameByMail(email);
+                            selectStatement.closeConnection();
+                        }
+
+                        System.out.println("Vou enviar --> " + message);
                         sendMessage(message);
 
                         break;
@@ -130,20 +139,25 @@ public class DealWithClient extends Thread {
                         selectStatement = new Select();
                         int new_index_traj = selectStatement.getIndexOfTrajectory(email);
 
-                        System.out.println("#####################################################################");
-                        System.out.println("Recebi esta mensagem com tipo --> " + mensagemDoCliente.getTipo());
-                        System.out.println("Recebi esta mensagem com email --> " + mensagemDoCliente.getEmail());
-                        System.out.println("Recebi esta mensagem com distance --> " + mensagemDoCliente.getDistance());
-                        System.out.println("Recebi esta mensagem com time --> " + mensagemDoCliente.getTime());
-                        System.out.println("nova trajetoria com indice --> " + new_index_traj);
+                        selectStatement.closeConnection();
+//                        System.out.println("#####################################################################");
+//                        System.out.println("Recebi esta mensagem com tipo --> " + mensagemDoCliente.getTipo());
+//                        System.out.println("Recebi esta mensagem com email --> " + mensagemDoCliente.getEmail());
+//                        System.out.println("Recebi esta mensagem com distance --> " + mensagemDoCliente.getDistance());
+//                        System.out.println("Recebi esta mensagem com time --> " + mensagemDoCliente.getTime());
+//                        System.out.println("nova trajetoria com indice --> " + new_index_traj);
 
                         insertStatement = new Insert();
                         int new_traje = insertStatement.insertNewTrajectory(email, new_index_traj, distance, time);
+
+                        insertStatement.closeConnection();
 
                         ArrayList<String> locations = mensagemDoCliente.getLocations();
                         System.out.println(locations.toArray().toString());
                         selectStatement = new Select();
                         int new_index_loc = selectStatement.getIndexOfLocation();
+
+                        selectStatement.closeConnection();
                         int i = 0;
                         for (String l : locations) {
                             System.out.println(l);
@@ -154,6 +168,7 @@ public class DealWithClient extends Thread {
                             insertStatement.insertNewLocation(email, new_index_loc, latitude, longitude, sequence, new_index_traj);
                             new_index_loc++;
                             i++;
+                            insertStatement.closeConnection();
                         }
 
                         if (new_traje != 0) {
@@ -169,19 +184,34 @@ public class DealWithClient extends Thread {
                         selectStatement = new Select();
                         ArrayList<String> trajectories = selectStatement.getTrajectories(email);
 
+                        selectStatement.closeConnection();
                         for (int j = 0; j < trajectories.size(); j++) {
                             String[] traj_split = trajectories.get(j).split(":");
 
                             selectStatement = new Select();
                             String latlong = selectStatement.getLocationsOfTrajectory(Integer.valueOf(traj_split[0]), email);
-                            System.out.println("LatLong" + latlong);
+                            //System.out.println("LatLong" + latlong);
                             String new_string = trajectories.get(j) + latlong;
                             System.out.println(new_string);
                             trajectories.set(j, new_string);
 
+                            selectStatement.closeConnection();
+
                         }
 
                         sendArray(trajectories);
+
+                        break;
+
+                    case MessagesType.GET_USER_INFORMATIONS:
+
+                        email = mensagemDoCliente.getEmail();
+
+                        selectStatement = new Select();
+
+                        sendMessage(selectStatement.getDistanceAndTimeByEmail(email));
+
+                        selectStatement.closeConnection();
 
                         break;
                     default:
@@ -194,13 +224,6 @@ public class DealWithClient extends Thread {
             e.printStackTrace();
         }
 
-    }
-
-
-    private int indexTrajectory(String email) {
-
-
-        return 0;
     }
 
 }

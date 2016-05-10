@@ -36,6 +36,25 @@ public class Select {
         return false;
     }
 
+    public String getUsernameByMail(String email) {
+        query = "SELECT * FROM user WHERE email=" + "\"" + email + "\"";
+        try {
+            PreparedStatement stmt = conn.prepareStatement(query);
+            ResultSet rs = (ResultSet) stmt.executeQuery();
+
+            String username = "";
+            while (rs.next()) {
+                username = rs.getString("username");
+            }
+            return username;
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public int getIndexOfTrajectory(String email) {
         query = "SELECT * FROM trajetoria WHERE user_email=" + "\"" + email + "\"";
         try {
@@ -47,7 +66,6 @@ public class Select {
             while (rs.next()) {
                 new_index = rs.getInt("idtragetoria");
             }
-
             return new_index + 1;
 
         } catch (SQLException e) {
@@ -110,12 +128,12 @@ public class Select {
             String positions = "";
 
             while (rs.next()) {
-                System.out.println("ENTREI");
                 String latitude = rs.getString("latitude");
                 String longitude = rs.getString("longitude");
 
                 positions += ":" + latitude + "/" + longitude;
             }
+
 
             return positions;
 
@@ -124,6 +142,41 @@ public class Select {
         }
 
         return null;
+    }
+
+    public String getDistanceAndTimeByEmail(String email) {
+        query = "SELECT * FROM trajetoria WHERE user_email=" + "\"" + email + "\"";
+
+        try {
+            PreparedStatement stmt = conn.prepareStatement(query);
+            ResultSet rs = (ResultSet) stmt.executeQuery();
+
+            double distance = 0.0;
+            double time = 0.0;
+
+            while (rs.next()) {
+                double dist = rs.getDouble("distancia");
+                String ti = rs.getString("tempo");
+
+                distance += dist;
+                time += Double.valueOf(ti);
+            }
+
+
+            return distance + ":" + time;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void closeConnection() {
+        try {
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 

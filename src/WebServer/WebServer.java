@@ -19,10 +19,10 @@ public class WebServer {
             serverSocket = new ServerSocket(6666); // Server socket
 
         } catch (IOException e) {
-            System.out.println("Could not listen on port: 4444");
+            System.out.println("Could not listen on port: 6666");
         }
 
-        System.out.println("Server started. Listening to the port 4444");
+        System.out.println("Server started. Listening to the port 6666");
         System.out.println("Wait for clients connections");
 
         while (true) {

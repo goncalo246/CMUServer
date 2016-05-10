@@ -54,6 +54,7 @@ public class Insert {
             e.printStackTrace();
         } finally {
             try {
+                System.out.println("Vou fechar");
                 conn.close();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -85,6 +86,15 @@ public class Insert {
             }
         }
         return 0;
+    }
+
+
+    public void closeConnection(){
+        try {
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 }

@@ -44,6 +44,11 @@ public class Utils {
 
                 return new MensagemDoCliente(MessagesType.GET_TRAJECTORIES, email);
 
+            case MessagesType.GET_USER_INFORMATIONS:
+
+                email = mensagem[1];
+
+                return new MensagemDoCliente(MessagesType.GET_USER_INFORMATIONS, email);
             default:
                 return null;
         }
