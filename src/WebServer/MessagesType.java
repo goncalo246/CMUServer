@@ -14,4 +14,7 @@ public class MessagesType {
     public static final String SAVE_TRAJECTORIES_INSUCESSO = "save_trajectories_insucesso";
     public static final String GET_TRAJECTORIES = "get_trajectories";
     public static final String GET_USER_INFORMATIONS = "getUserInformations";
+    public static final String GET_STATIONS = "getStations";
+    public static final String SET_AVAILABILITY_BIKE = "setAvailabilityOfbike";
+    public static final String UPDATE_TRAJECTORIES = "updateTrajectories";
 }

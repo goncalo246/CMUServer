@@ -39,14 +39,15 @@ public class Insert {
         return 0;
     }
 
-    public int insertNewTrajectory(String email, int index, String distance, String time) {
+    public int insertNewTrajectory(String email, int index, String distance, String time, String pontos) {
         try {
-            PreparedStatement pStmt = conn.prepareStatement("insert into trajetoria(idtragetoria,user_email,tempo,distancia) values (?, ?, ?, ?)");
+            PreparedStatement pStmt = conn.prepareStatement("insert into trajetoria(idtragetoria,user_email,tempo,distancia,pontos) values (?, ?, ?, ?,?)");
 
             pStmt.setInt(1, index);
             pStmt.setString(2, email);
             pStmt.setString(3, time);
             pStmt.setDouble(4, Double.valueOf(distance));
+            pStmt.setInt(5, Integer.valueOf(pontos));
 
             return pStmt.executeUpdate();
 
@@ -89,7 +90,7 @@ public class Insert {
     }
 
 
-    public void closeConnection(){
+    public void closeConnection() {
         try {
             conn.close();
         } catch (SQLException e) {

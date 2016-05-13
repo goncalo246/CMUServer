@@ -14,10 +14,14 @@ public class MensagemDoCliente implements Serializable {
     private String mensagem;
     private String nome;
     private String email;
+    private String pontos;
     private String password;
     private String distance;
     private String time;
     private ArrayList<String> locations;
+    private String identifier;
+    private boolean availability;
+    private ArrayList<String> data;
 
     public MensagemDoCliente(String tipo, String email, String password) {
         this.tipo = tipo;
@@ -32,11 +36,12 @@ public class MensagemDoCliente implements Serializable {
         this.password = password;
     }
 
-    public MensagemDoCliente(String tipo, String email, String distance, String time, ArrayList<String> locations) {
+    public MensagemDoCliente(String tipo, String email, String distance, String time, String pontos, ArrayList<String> locations) {
         this.tipo = tipo;
         this.email = email;
         this.distance = distance;
         this.time = time;
+        this.pontos = pontos;
         this.locations = locations;
     }
 
@@ -45,6 +50,21 @@ public class MensagemDoCliente implements Serializable {
         this.email = email;
     }
 
+    public MensagemDoCliente(String tipo, String identifier, boolean availability) {
+        this.tipo = tipo;
+        this.identifier = identifier;
+        this.availability = availability;
+    }
+
+    public MensagemDoCliente(String tipo, String email, ArrayList<String> data) {
+        this.tipo = tipo;
+        this.email = email;
+        this.data = data;
+    }
+
+    public MensagemDoCliente(String tipo) {
+        this.tipo = tipo;
+    }
 
     public String getEmail() {
         return email;
@@ -76,5 +96,21 @@ public class MensagemDoCliente implements Serializable {
 
     public String getTime() {
         return time;
+    }
+
+    public String getIdentifier() {
+        return identifier;
+    }
+
+    public ArrayList<String> getData() {
+        return data;
+    }
+
+    public String getPontos() {
+        return pontos;
+    }
+
+    public boolean isAvailable() {
+        return availability;
     }
 }

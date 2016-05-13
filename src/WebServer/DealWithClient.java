@@ -5,14 +5,17 @@ import com.mysql.jdbc.Connection;
 import dbo.ConnectToDataBase;
 import dbo.Insert;
 import dbo.Select;
+import dbo.Update;
 
 import javax.xml.ws.wsaddressing.W3CEndpointReferenceBuilder;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.sql.Array;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Vector;
 
 /**
@@ -27,6 +30,7 @@ public class DealWithClient extends Thread {
 
     private Select selectStatement;
     private Insert insertStatement;
+    private Update updateStatement;
 
     private String email = "";
     private String username = "";
@@ -67,12 +71,14 @@ public class DealWithClient extends Thread {
 
     @Override
     public void run() {
-        String msg = null;
+        Object msg = null;
         try {
 
             while (true) {
 
-                msg = (String) inputStream.readObject();
+                msg = (Object) inputStream.readObject();
+
+                System.out.println("------> " + msg);
 
                 MensagemDoCliente mensagemDoCliente = Utils.gerarMensagemcliente(msg);
 
@@ -108,11 +114,6 @@ public class DealWithClient extends Thread {
                         email = mensagemDoCliente.getEmail();
                         password = mensagemDoCliente.getPassword();
 
-//                        System.out.println("#####################################################################");
-//                        System.out.println("Recebi esta mensagem com tipo --> " + mensagemDoCliente.getTipo());
-//                        System.out.println("Recebi esta mensagem com email --> " + mensagemDoCliente.getEmail());
-//                        System.out.println("Recebi esta mensagem com password --> " + mensagemDoCliente.getPassword());
-
                         selectStatement = new Select();
                         boolean confirmed = selectStatement.confirmLogin(email, password);
 
@@ -125,8 +126,15 @@ public class DealWithClient extends Thread {
                             selectStatement.closeConnection();
                         }
 
+                        selectStatement = new Select();
+
+                        String info = selectStatement.getDistanceAndTimeByEmail(email);
+
+                        selectStatement.closeConnection();
+
+
                         System.out.println("Vou enviar --> " + message);
-                        sendMessage(message);
+                        sendMessage(message + ":" + info);
 
                         break;
 
@@ -135,20 +143,15 @@ public class DealWithClient extends Thread {
                         email = mensagemDoCliente.getEmail();
                         String distance = mensagemDoCliente.getDistance();
                         String time = mensagemDoCliente.getTime();
+                        String pontos = mensagemDoCliente.getPontos();
 
                         selectStatement = new Select();
                         int new_index_traj = selectStatement.getIndexOfTrajectory(email);
 
                         selectStatement.closeConnection();
-//                        System.out.println("#####################################################################");
-//                        System.out.println("Recebi esta mensagem com tipo --> " + mensagemDoCliente.getTipo());
-//                        System.out.println("Recebi esta mensagem com email --> " + mensagemDoCliente.getEmail());
-//                        System.out.println("Recebi esta mensagem com distance --> " + mensagemDoCliente.getDistance());
-//                        System.out.println("Recebi esta mensagem com time --> " + mensagemDoCliente.getTime());
-//                        System.out.println("nova trajetoria com indice --> " + new_index_traj);
 
                         insertStatement = new Insert();
-                        int new_traje = insertStatement.insertNewTrajectory(email, new_index_traj, distance, time);
+                        int new_traje = insertStatement.insertNewTrajectory(email, new_index_traj, distance, time, pontos);
 
                         insertStatement.closeConnection();
 
@@ -166,9 +169,10 @@ public class DealWithClient extends Thread {
                             int sequence = i;
                             insertStatement = new Insert();
                             insertStatement.insertNewLocation(email, new_index_loc, latitude, longitude, sequence, new_index_traj);
+                            insertStatement.closeConnection();
                             new_index_loc++;
                             i++;
-                            insertStatement.closeConnection();
+
                         }
 
                         if (new_traje != 0) {
@@ -190,7 +194,6 @@ public class DealWithClient extends Thread {
 
                             selectStatement = new Select();
                             String latlong = selectStatement.getLocationsOfTrajectory(Integer.valueOf(traj_split[0]), email);
-                            //System.out.println("LatLong" + latlong);
                             String new_string = trajectories.get(j) + latlong;
                             System.out.println(new_string);
                             trajectories.set(j, new_string);
@@ -214,6 +217,64 @@ public class DealWithClient extends Thread {
                         selectStatement.closeConnection();
 
                         break;
+
+                    case MessagesType.GET_STATIONS:
+
+                        System.out.println(mensagemDoCliente.getTipo());
+                        selectStatement = new Select();
+
+                        ArrayList<String> stations = selectStatement.getStations();
+                        System.out.println("" + stations);
+                        sendArray(stations);
+
+                        selectStatement.closeConnection();
+
+                        break;
+
+                    case MessagesType.SET_AVAILABILITY_BIKE:
+
+                        updateStatement = new Update();
+
+                        System.out.println("Vou mudar a disponibilidade para ---> " + mensagemDoCliente.isAvailable());
+                        updateStatement.setBikeAvailability(mensagemDoCliente.getIdentifier(), mensagemDoCliente.isAvailable());
+
+                        updateStatement.closeConnection();
+
+                        break;
+
+                    case MessagesType.UPDATE_TRAJECTORIES:
+
+                        email = mensagemDoCliente.getEmail();
+
+                        ArrayList<String> locals = new ArrayList<String>();
+
+                        selectStatement = new Select();
+                        int new_index_traj2 = selectStatement.getIndexOfTrajectory(email);
+                        selectStatement.closeConnection();
+
+                        System.out.println("size--->" + mensagemDoCliente.getData());
+                        for (String s : mensagemDoCliente.getData()) {
+                            String[] split = s.split(":");
+
+                            String dist = split[0];
+                            String tim = split[1];
+                            String po = split[2];
+
+                            insertStatement = new Insert();
+                            insertStatement.insertNewTrajectory(email, new_index_traj2, dist, tim, po);
+                            insertStatement.closeConnection();
+
+
+                            insertLocationOfTrajectory(new ArrayList<String>(Arrays.asList(Arrays.copyOfRange(split, 3, split.length))), new_index_traj2);
+
+                            new_index_traj2++;
+
+                        }
+
+                        sendMessage("Sucesso");
+
+
+                        break;
                     default:
                         break;
                 }
@@ -222,6 +283,33 @@ public class DealWithClient extends Thread {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
+        }
+
+    }
+
+    private void insertLocationOfTrajectory(ArrayList<String> location, int id_traj) {
+
+        System.out.println("---->Localizaçoes ---> " + location);
+
+        selectStatement = new Select();
+        int new_index_loc = selectStatement.getIndexOfLocation();
+        selectStatement.closeConnection();
+
+        int seq = 0;
+        for (String spl : location) {
+            String[] coord = spl.split("/");
+
+            String lat = coord[0];
+            String lon = coord[1];
+
+            insertStatement = new Insert();
+            insertStatement.insertNewLocation(email, new_index_loc, lat, lon, seq, id_traj);
+            insertStatement.closeConnection();
+
+            System.out.println("id--->" + new_index_loc);
+
+            new_index_loc++;
+            seq++;
         }
 
     }

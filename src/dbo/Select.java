@@ -1,7 +1,9 @@
 package dbo;
 
+import WebServer.MessagesType;
 import com.mysql.jdbc.Connection;
 
+import java.awt.*;
 import java.io.Serializable;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -153,23 +155,54 @@ public class Select {
 
             double distance = 0.0;
             double time = 0.0;
+            int ponto = 0;
 
             while (rs.next()) {
                 double dist = rs.getDouble("distancia");
                 String ti = rs.getString("tempo");
+                int pontos = rs.getInt("pontos");
 
                 distance += dist;
                 time += Double.valueOf(ti);
+                ponto += Integer.valueOf(pontos);
             }
 
 
-            return distance + ":" + time;
+            return distance + ":" + time + ":" + ponto;
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return null;
     }
+
+
+    public ArrayList getStations() {
+        ArrayList<String> stations = new ArrayList<String>();
+
+        query = "SELECT * FROM estacao";
+
+        try {
+            PreparedStatement stmt = conn.prepareStatement(query);
+            ResultSet rs = (ResultSet) stmt.executeQuery();
+
+            stations.add(MessagesType.GET_STATIONS);
+            while (rs.next()) {
+                String latitude = rs.getString("latitude");
+                String longitude = rs.getString("longitude");
+                int raio = rs.getInt("raio");
+
+                stations.add(latitude + ":" + longitude + ":" + raio);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return stations;
+
+    }
+
 
     public void closeConnection() {
         try {
